@@ -106,4 +106,4 @@ const sendPruuPruuSound = async () => {
 };
 
 // Log our bot in using the token from https://discord.com/developers/applications
-client.login(config().parsed?.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN ?? config().parsed?.DISCORD_TOKEN);
