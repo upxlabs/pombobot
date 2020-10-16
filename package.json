@@ -7,10 +7,14 @@
     "start": "ts-node-dev --inspect --transpile-only --ignore-watch node_modules src/server.ts"
   },
   "devDependencies": {
+    "prettier": "^2.1.2",
     "ts-node-dev": "^1.0.0-pre.63",
     "typescript": "^4.0.3"
   },
   "dependencies": {
-    "discord.js": "^12.3.1"
+    "@discordjs/opus": "^0.3.2",
+    "discord.js": "^12.3.1",
+    "dotenv": "^8.2.0",
+    "ffmpeg-static": "^4.2.7"
   }
 }

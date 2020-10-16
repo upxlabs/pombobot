@@ -1,6 +1,9 @@
 import discord, { VoiceChannel } from 'discord.js';
+import { config } from 'dotenv';
 
 const client = new discord.Client();
+const pomodoroTime = 25 * 60 * 1000;
+const shortBreakTime = 5 * 60 * 1000;
 
 client.on('ready', () => {
   console.log('I am ready!');
@@ -11,7 +14,10 @@ client.on('message', (message) => {
   console.log('received message');
   if (message.content === '/ping') {
     message.channel.send('pong');
-    changeChannelTag('');
+  }
+
+  if (message.content === '/start') {
+    startPomo();
   }
 
   if (message.content === '/time') {
@@ -21,27 +27,83 @@ client.on('message', (message) => {
   }
 });
 
-const changeChannelTag = (tag: string) => {
+const startPomo = () => {
+  changeChannelTag('🍅');
+  sendPruuPruuSound();
+  setTimeout(() => {
+    shortBreak();
+  }, pomodoroTime);
+};
+
+const shortBreak = () => {
+  changeChannelTag('☕️');
+  sendPruuPruuSound();
+  setTimeout(() => {
+    startPomo();
+  }, shortBreakTime);
+};
+
+const changeChannelTag = async (tag: string) => {
   const SEPARATOR = '-';
-  console.log('Changing channel to ' + tag);
-  client.channels.cache.each((channel: discord.Channel) => {
-    // console.log('channel', channel);
+
+  await Promise.all(
+    client.channels.cache.map(async (channel) => {
+      if (channel.type !== 'voice') {
+        return;
+      }
+
+      const voiceChannel = channel as VoiceChannel;
+      const nameArray = voiceChannel.name.split(SEPARATOR);
+      const name = nameArray[0].trim();
+
+      if (!tag) {
+        voiceChannel.setName(name);
+      } else {
+        console.log(
+          'Trying changing channel to ' + `${name} ${SEPARATOR} ${tag}`
+        );
+
+        await voiceChannel
+          .setName(`${name} ${SEPARATOR} ${tag}`)
+          .then(() => console.log(`Ok channel ${name} changed to ${tag}`))
+          .catch(console.error);
+      }
+    })
+  );
+};
+
+const sendPruuPruuSound = async () => {
+  const channels = client.channels.cache.map((channel) => channel);
+
+  for (const channel of channels) {
+    console.log(channel.type);
+
     if (channel.type !== 'voice') {
-      return;
+      continue;
     }
 
     const voiceChannel = channel as VoiceChannel;
-    const nameArray = voiceChannel.name.split(SEPARATOR);
-    const name = nameArray[0].trim();
-    console.log('channel', `>${name}<`);
+    console.log(`joining ${voiceChannel.name}`);
+    const connection = await voiceChannel.join();
+    const dispatcher = connection.play(
+      '/Users/danizord/Projects/upxlabs/pombobot/assets/pru.mp3'
+    );
 
-    if (!tag) {
-      voiceChannel.setName(name);
-    } else {
-      voiceChannel.setName(`${name} ${SEPARATOR} ${tag}`);
-    }
-  });
+    dispatcher.setVolume(2);
+
+    const promise = new Promise((resolve, reject) => {
+      dispatcher.on('finish', () => {
+        console.log('finished');
+        voiceChannel.leave();
+        dispatcher.destroy();
+        resolve();
+      });
+    });
+
+    await promise;
+    await new Promise((res) => setTimeout(res, 3000));
+  }
 };
 
 // Log our bot in using the token from https://discord.com/developers/applications
-client.login('');
+client.login(config().parsed?.DISCORD_TOKEN);
