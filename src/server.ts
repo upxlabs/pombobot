@@ -85,9 +85,7 @@ const sendPruuPruuSound = async () => {
     const voiceChannel = channel as VoiceChannel;
     console.log(`joining ${voiceChannel.name}`);
     const connection = await voiceChannel.join();
-    const dispatcher = connection.play(
-      '/Users/danizord/Projects/upxlabs/pombobot/assets/pru.mp3'
-    );
+    const dispatcher = connection.play(`${process.cwd()}/assets/pru.mp3`);
 
     dispatcher.setVolume(2);
 
